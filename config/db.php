@@ -2,9 +2,9 @@
 
 return [
     'class' => 'yii\db\Connection',
-    'dsn' => 'mysql:host=localhost;dbname=yii2basic',
-    'username' => 'root',
-    'password' => '',
+    'dsn' => 'mysql:host=127.0.0.1;dbname=todolistapp;charset=utf8mb4',
+    'username' => 'todo_user',
+    'password' => 'DBadmin',
     'charset' => 'utf8',
 
     // Schema cache options (for production environment)
