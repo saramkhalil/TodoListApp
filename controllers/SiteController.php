@@ -10,6 +10,7 @@ use yii\filters\VerbFilter;
 use app\models\LoginForm;
 use app\models\ContactForm;
 use app\models\SignupForm;
+use app\models\Todo;
 
 class SiteController extends Controller
 {
@@ -34,6 +35,8 @@ class SiteController extends Controller
                 'class' => VerbFilter::class,
                 'actions' => [
                     'logout' => ['post'],
+                    'toggle-todo' => ['post'],
+                    'update-todo' => ['post'],
                 ],
             ],
         ];
@@ -62,9 +65,90 @@ class SiteController extends Controller
      */
     public function actionIndex()
     {
-        return $this->render('index');
+        if (\yii::$app->user->isGuest) {
+            return $this->redirect(['site/login']);
+        }
+
+        $todo = new Todo();
+
+        if ($todo->load(\yii::$app->request->post())) {
+            $todo->user_id = \Yii::$app->user->id;
+            $todo->status = Todo::STATUS_PENDING;
+        
+
+            if ($todo->save()) {
+                \Yii::$app->session->setFlash('success', 'Todo Created.');
+                return $this->refresh();
+            }
+
+            \Yii::$app->session->setFlash('error', 'Unable to create Todo.');
+        }    
+
+        $todos = Todo::find()
+            ->where(['user_id' => \Yii::$app->user->id])
+            ->orderBy(['created_at' => SORT_DESC])
+            ->all();
+        
+        return $this->render('index', [
+            'model' => $todo,
+            'todos' => $todos,
+        ]);
     }
 
+    public function actionToggleTodo($id)
+    {
+        if (Yii::$app->user->isGuest) {
+            return $this->redirect(['site/login']);
+        }
+    
+        $todo = Todo::find()
+            ->where(['id' => (int)$id, 'user_id' => Yii::$app->user->id])
+            ->one();
+    
+        if (!$todo) {
+            Yii::$app->session->setFlash('error', 'Todo not found.');
+            return $this->redirect(['site/index']);
+        }
+    
+        if ((int)$todo->status === Todo::STATUS_PENDING) {
+            $todo->status = Todo::STATUS_DONE;
+            if ($todo->save(false)) {
+                Yii::$app->session->setFlash('success', 'Todo marked as done.');
+            } else {
+                Yii::$app->session->setFlash('error', 'Failed to update status.');
+            }
+        } else {
+            Yii::$app->session->setFlash('info', 'Todo is already done.');
+        }
+    
+        return $this->redirect(['site/index']);
+    }
+
+    public function actionUpdateTodo($id)
+    {
+        if (Yii::$app->user->isGuest) {
+            return $this->redirect(['site/login']);
+        }
+    
+        $todo = Todo::find()
+            ->where(['id' => (int)$id, 'user_id' => Yii::$app->user->id])
+            ->one();
+    
+        if (!$todo) {
+            Yii::$app->session->setFlash('error', 'Todo not found.');
+            return $this->redirect(['site/index']);
+        }
+    
+        if ($todo->load(Yii::$app->request->post()) && $todo->save()) {
+            Yii::$app->session->setFlash('success', 'Todo updated.');
+        } else {
+            Yii::$app->session->setFlash('error', 'Unable to update todo.');
+        }
+    
+        return $this->redirect(['site/index']);
+    }
+
+    
     public function actionSignup()
     {
         if (!Yii::$app->user->isGuest) {
