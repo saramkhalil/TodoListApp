@@ -1,12 +1,12 @@
 <?php
 
-use yii\widgets\ActiveForm;
 use yii\helpers\Html;
+use yii\widgets\ActiveForm;
 
 /* @var $model app\models\Todo */
 /* @var $todos app\models\Todo[] */
 
-$this->title = "Home";
+$this->title = 'Home';
 ?>
 
 <h1>Your Todos</h1>
@@ -23,7 +23,7 @@ $this->title = "Home";
 
 <?php if (empty($todos)): ?>
     <p>Not Todos yet.</p>
-    <?php else: ?>
+<?php else: ?>
     <ul>
         <?php foreach ($todos as $t): ?>
             <li>
@@ -31,10 +31,10 @@ $this->title = "Home";
                 <?php if ($t->description): ?>
                     <div><?= nl2br(Html::encode($t->description)) ?></div>
                 <?php endif; ?>
-                <small>Status: <?= $t->status == \app\models\Todo::STATUS_PENDING ? 'Pending' : 'Done' ?></small>
+                <small>Status: <?= Html::encode($t->getStatusLabel()) ?></small>
 
                 <div style="margin-top: 6px;">
-                    <?php if ((int)$t->status === \app\models\Todo::STATUS_PENDING): ?>
+                    <?php if ((int) $t->status === \app\models\Todo::STATUS_PENDING): ?>
                         <?= Html::a(
                             'Mark as Done',
                             ['site/toggle-todo', 'id' => $t->id],
@@ -48,7 +48,7 @@ $this->title = "Home";
                     ) ?>
                 </div>
 
-                <?php if ((int)Yii::$app->request->get('edit_id') === (int)$t->id): ?>
+                <?php if ((int) Yii::$app->request->get('edit_id') === (int) $t->id): ?>
                     <div style="margin-top: 10px;">
                         <?php $form = ActiveForm::begin([
                             'action' => ['site/update-todo', 'id' => $t->id],
