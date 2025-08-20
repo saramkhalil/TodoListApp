@@ -40,7 +40,6 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
         'options' => ['class' => 'navbar-nav'],
         'items' => [
             ['label' => 'Home', 'url' => ['/site/index']],
-            ['label' => 'Todos', 'url' => ['/todo/index'], 'visible' => !Yii::$app->user->isGuest], // will work after CRUD
             ['label' => 'Signup', 'url' => ['/site/signup'], 'visible' => Yii::$app->user->isGuest],
             ['label' => 'Login', 'url' => ['/site/login'], 'visible' => Yii::$app->user->isGuest],
             Yii::$app->user->isGuest ? '' : '<li class="nav-item">'
