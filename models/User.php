@@ -2,13 +2,12 @@
 
 namespace app\models;
 
-use Yii;
-use yii\db\ActiveRecord;
 use yii\behaviors\TimestampBehavior;
+use yii\db\ActiveRecord;
+use Yii;
 
 class User extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
 {
-
     public function behaviors()
     {
         return [
@@ -30,12 +29,11 @@ class User extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
             [['username'], 'unique'],
         ];
     }
-    
+
     public static function tableName()
     {
         return '{{%user}}';
     }
-
 
     public static function findIdentity($id)
     {
@@ -44,7 +42,7 @@ class User extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
 
     public static function findIdentityByAccessToken($token, $type = null)
     {
-        return null; // not used for now
+        return null;  // not used for now
     }
 
     public static function findByUsername($username)
@@ -56,7 +54,6 @@ class User extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
     {
         return $this->id;
     }
-    
 
     public function getAuthKey()
     {

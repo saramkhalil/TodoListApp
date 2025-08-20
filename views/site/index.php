@@ -1,53 +1,71 @@
 <?php
 
-/** @var yii\web\View $this */
+use yii\helpers\Html;
+use yii\widgets\ActiveForm;
 
-$this->title = 'Todo List App';
+/* @var $model app\models\Todo */
+/* @var $todos app\models\Todo[] */
+
+$this->title = 'Home';
 ?>
-<div class="site-index">
 
-    <div class="jumbotron text-center bg-transparent mt-5 mb-5">
-        <h1 class="display-4">Congratulations!</h1>
+<h1>Your Todos</h1>
 
-        <p class="lead">You have successfully created your Yii-powered application.</p>
-
-        <p><a class="btn btn-lg btn-success" href="https://www.yiiframework.com">Get started with Yii</a></p>
-    </div>
-
-    <div class="body-content">
-
-        <div class="row">
-            <div class="col-lg-4 mb-3">
-                <h2>Heading</h2>
-
-                <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et
-                    dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip
-                    ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu
-                    fugiat nulla pariatur.</p>
-
-                <p><a class="btn btn-outline-secondary" href="https://www.yiiframework.com/doc/">Yii Documentation &raquo;</a></p>
-            </div>
-            <div class="col-lg-4 mb-3">
-                <h2>Heading</h2>
-
-                <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et
-                    dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip
-                    ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu
-                    fugiat nulla pariatur.</p>
-
-                <p><a class="btn btn-outline-secondary" href="https://www.yiiframework.com/forum/">Yii Forum &raquo;</a></p>
-            </div>
-            <div class="col-lg-4">
-                <h2>Heading</h2>
-
-                <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et
-                    dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip
-                    ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu
-                    fugiat nulla pariatur.</p>
-
-                <p><a class="btn btn-outline-secondary" href="https://www.yiiframework.com/extensions/">Yii Extensions &raquo;</a></p>
-            </div>
-        </div>
-
-    </div>
+<?php $form = ActiveForm::begin(); ?>
+<?= $form->field($model, 'title')->textInput(['maxlength' => true, 'required' => true]) ?>
+<?= $form->field($model, 'description')->textarea(['rows' => 3]) ?>
+<div class="form-group">
+    <?= Html::submitButton('Add Todo', ['class' => 'btn btn-primary']) ?>
 </div>
+<?php ActiveForm::end(); ?>
+
+<hr>
+
+<?php if (empty($todos)): ?>
+    <p>Not Todos yet.</p>
+<?php else: ?>
+    <ul>
+        <?php foreach ($todos as $t): ?>
+            <li>
+                <strong><?= Html::encode($t->title) ?></strong>
+                <?php if ($t->description): ?>
+                    <div><?= nl2br(Html::encode($t->description)) ?></div>
+                <?php endif; ?>
+                <small>Status: <?= Html::encode($t->getStatusLabel()) ?></small>
+
+                <div style="margin-top: 6px;">
+                    <?php if ((int) $t->status === \app\models\Todo::STATUS_PENDING): ?>
+                        <?= Html::a(
+                            'Mark as Done',
+                            ['site/toggle-todo', 'id' => $t->id],
+                            ['class' => 'btn btn-success btn-sm', 'data-method' => 'post']
+                        ) ?>
+                    <?php endif; ?>
+                    <?= Html::a(
+                        'Edit',
+                        ['site/index', 'edit_id' => $t->id],
+                        ['class' => 'btn btn-secondary btn-sm']
+                    ) ?>
+                </div>
+
+                <?php if ((int) Yii::$app->request->get('edit_id') === (int) $t->id): ?>
+                    <div style="margin-top: 10px;">
+                        <?php $form = ActiveForm::begin([
+                            'action' => ['site/update-todo', 'id' => $t->id],
+                            'method' => 'post',
+                        ]); ?>
+                        <?= $form->field($t, 'title')->textInput(['maxlength' => true, 'required' => true]) ?>
+                        <?= $form->field($t, 'description')->textarea(['rows' => 3]) ?>
+                        <div class="form-group">
+                            <?= Html::submitButton('Save', ['class' => 'btn btn-primary btn-sm']) ?>
+                            <?= Html::a('Cancel', ['site/index'], ['class' => 'btn btn-link btn-sm']) ?>
+                        </div>
+                        <?php ActiveForm::end(); ?>
+                    </div>
+                <?php endif; ?>
+
+                <hr>
+            </li>
+        <?php endforeach; ?>
+    </ul>
+<?php endif; ?>

@@ -15,7 +15,7 @@ class SignupForm extends Model
             [['username', 'password'], 'required'],
             ['username', 'string', 'min' => 3, 'max' => 255],
             ['password', 'string', 'min' => 6],
-            ['username', 'unique',  'targetClass' => User::class, 'targetAttribute' => 'username'],
+            ['username', 'unique', 'targetClass' => User::class, 'targetAttribute' => 'username'],
         ];
     }
 
