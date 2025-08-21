@@ -36,6 +36,8 @@ class SiteController extends Controller
                     'logout' => ['post'],
                     'toggle-todo' => ['post'],
                     'update-todo' => ['post'],
+                    'start-todo' => ['post'],
+                    'complete-todo' => ['post'],
                 ],
             ],
         ];
@@ -79,10 +81,16 @@ class SiteController extends Controller
         }
 
         $todos = Todo::find()->forUser(Yii::$app->user->id)->recent()->all();
+        $backlog = Todo::find()->forUser(Yii::$app->user->id)->pending()->recent()->all();
+        $inProgress = Todo::find()->forUser(Yii::$app->user->id)->inProgress()->recent()->all();
+        $completed = Todo::find()->forUser(Yii::$app->user->id)->done()->recent()->all();
 
         return $this->render('index', [
             'model' => $todo,
             'todos' => $todos,
+            'backlog' => $backlog,
+            'inProgress' => $inProgress,
+            'completed' => $completed,
         ]);
     }
 
@@ -124,6 +132,48 @@ class SiteController extends Controller
             Yii::$app->session->setFlash('error', 'Unable to update todo.');
         }
 
+        return $this->redirect(['site/index']);
+    }
+
+    public function actionStartTodo($id)
+    {
+        $todo = Todo::find()->forUser(Yii::$app->user->id)->byId((int) $id)->one();
+        if (!$todo) {
+            Yii::$app->session->setFlash('error', 'Todo does not exists.');
+            return $this->redirect(['site/index']);
+        }
+        if ((int) $todo->status === Todo::STATUS_PENDING) {
+            $todo->status = Todo::STATUS_IN_PROGRESS;
+            if ($todo->started_at == null) {
+                $todo->started_at == time();
+            }
+            if ($todo->save(false)) {
+                Yii::$app->session->setFlash('success', 'Todo started.');
+            } else {
+                Yii::$app->session->setFlash('error', 'Failed to start Todo.');
+            }
+        }
+        return $this->redirect['site/index'];
+    }
+
+    public function actionCompleteTodo($id)
+    {
+        $todo = Todo::find()->forUser(Yii::$app->user->id)->byId((int) $id)->one();
+        if (!todo) {
+            Yii::$app->session->setFlash('error', 'Todo does not exists.');
+            return $this->redirect(['site/index']);
+        }
+        if ((int) $todo->status != Todo::STATUS_DONE) {
+            $todo->status = Todo::STATUS_DONE;
+            if ($todo->completed_at == null) {
+                $todo->completd_at == time();
+            }
+            if ($todo->save(false)) {
+                Yii::$app->session->setFlash('success', 'Todo completed.');
+            } else {
+                Yii::$app->session->setFlash('error', 'Failed to complete Todo.');
+            }
+        }
         return $this->redirect(['site/index']);
     }
 
