@@ -10,62 +10,151 @@ $this->title = 'Home';
 ?>
 
 <h1>Your Todos</h1>
+<p>
+    <?= \yii\helpers\Html::button('Add Todo', [
+        'class' => 'btn btn-primary',
+        'data-bs-toggle' => 'modal',
+        'data-bs-target' => '#addTodoModal'
+    ]) ?>
+</p>
 
-<?php $form = ActiveForm::begin(); ?>
-<?= $form->field($model, 'title')->textInput(['maxlength' => true, 'required' => true]) ?>
-<?= $form->field($model, 'description')->textarea(['rows' => 3]) ?>
-<div class="form-group">
-    <?= Html::submitButton('Add Todo', ['class' => 'btn btn-primary']) ?>
+<div class="modal fade" id="addTodoModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">New Todo</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <?php $form = \yii\widgets\ActiveForm::begin(); ?>
+            <?= $form->field($model, 'title')->textInput(['maxlength' => true, 'required' => true]) ?>
+            <?= $form->field($model, 'description')->textarea(['rows' => 3]) ?>
+      </div>
+      <div class="modal-footer">
+        <?= \yii\helpers\Html::submitButton('Create', ['class' => 'btn btn-primary']) ?>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+      </div>
+        <?php \yii\widgets\ActiveForm::end(); ?>
+    </div>
+  </div>
 </div>
-<?php ActiveForm::end(); ?>
 
 <hr>
 
-<?php if (empty($todos)): ?>
-    <p>Not Todos yet.</p>
-<?php else: ?>
-    <ul>
-        <?php foreach ($todos as $t): ?>
-            <li>
-                <strong><?= Html::encode($t->title) ?></strong>
-                <?php if ($t->description): ?>
-                    <div><?= nl2br(Html::encode($t->description)) ?></div>
-                <?php endif; ?>
-                <small>Status: <?= Html::encode($t->getStatusLabel()) ?></small>
+<div class="row g-4">
+  <div class="col-md-4">
+    <h4>Backlog</h4>
+    <?php if (empty($backlog)): ?>
+      <p class="text-muted">No items.</p>
+    <?php else:
+    foreach ($backlog as $t): ?>
+      <div class="card mb-3 shadow-sm">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <strong><?= \yii\helpers\Html::encode($t->title) ?></strong>
+            <?= \yii\helpers\Html::a('Start', ['site/start-todo', 'id' => $t->id], [
+                'class' => 'btn btn-sm btn-outline-primary',
+                'data-method' => 'post'
+            ]) ?>
+          </div>
+          <?php if ($t->description): ?>
+            <div class="mt-2 text-muted"><?= nl2br(\yii\helpers\Html::encode($t->description)) ?></div>
+          <?php endif; ?>
+        </div>
+      </div>
+    <?php endforeach;
+endif; ?>
+  </div>
 
-                <div style="margin-top: 6px;">
-                    <?php if ((int) $t->status === \app\models\Todo::STATUS_PENDING): ?>
-                        <?= Html::a(
-                            'Mark as Done',
-                            ['site/toggle-todo', 'id' => $t->id],
-                            ['class' => 'btn btn-success btn-sm', 'data-method' => 'post']
-                        ) ?>
-                    <?php endif; ?>
-                    <?= Html::a(
-                        'Edit',
-                        ['site/index', 'edit_id' => $t->id],
-                        ['class' => 'btn btn-secondary btn-sm']
-                    ) ?>
-                </div>
+  <div class="col-md-4">
+    <h4>In Progress</h4>
+    <?php if (empty($inProgress)): ?>
+      <p class="text-muted">No items.</p>
+    <?php else:
+    foreach ($inProgress as $t): ?>
+      <div class="card mb-3 border-warning shadow-sm">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <strong><?= \yii\helpers\Html::encode($t->title) ?></strong>
+            <?= \yii\helpers\Html::a('Complete', ['site/complete-todo', 'id' => $t->id], [
+                'class' => 'btn btn-sm btn-success',
+                'data-method' => 'post'
+            ]) ?>
+          </div>
+          <?php if ($t->description): ?>
+            <div class="mt-2 text-muted"><?= nl2br(\yii\helpers\Html::encode($t->description)) ?></div>
+          <?php endif; ?>
+          <div class="mt-2">
+            <small class="text-warning">
+              Time spent: <span class="todo-timer" data-started-at="<?= (int) $t->started_at ?>"></span>
+            </small>
+          </div>
+        </div>
+      </div>
+    <?php endforeach;
+endif; ?>
+  </div>
 
-                <?php if ((int) Yii::$app->request->get('edit_id') === (int) $t->id): ?>
-                    <div style="margin-top: 10px;">
-                        <?php $form = ActiveForm::begin([
-                            'action' => ['site/update-todo', 'id' => $t->id],
-                            'method' => 'post',
-                        ]); ?>
-                        <?= $form->field($t, 'title')->textInput(['maxlength' => true, 'required' => true]) ?>
-                        <?= $form->field($t, 'description')->textarea(['rows' => 3]) ?>
-                        <div class="form-group">
-                            <?= Html::submitButton('Save', ['class' => 'btn btn-primary btn-sm']) ?>
-                            <?= Html::a('Cancel', ['site/index'], ['class' => 'btn btn-link btn-sm']) ?>
-                        </div>
-                        <?php ActiveForm::end(); ?>
-                    </div>
-                <?php endif; ?>
+  <div class="col-md-4">
+    <h4>Completed</h4>
+    <?php if (empty($completed)): ?>
+      <p class="text-muted">No items.</p>
+    <?php else:
+    foreach ($completed as $t): ?>
+      <div class="card mb-3 border-success shadow-sm">
+        <div class="card-body">
+          <strong><?= \yii\helpers\Html::encode($t->title) ?></strong>
+          <?php if ($t->description): ?>
+            <div class="mt-2 text-muted"><?= nl2br(\yii\helpers\Html::encode($t->description)) ?></div>
+          <?php endif; ?>
+          <?php
+        $elapsed = ($t->started_at && $t->completed_at) ? max(0, $t->completed_at - $t->started_at) : null;
+        $elapsedText = $elapsed !== null ? gmdate('H:i:s', $elapsed) : '—';
+        ?>
+          <div class="mt-2">
+            <small class="text-success">Took: <?= $elapsedText ?></small>
+          </div>
+        </div>
+      </div>
+    <?php endforeach;
+endif; ?>
+  </div>
+</div>
 
-                <hr>
-            </li>
-        <?php endforeach; ?>
-    </ul>
-<?php endif; ?>
+<?php
+$this->registerJs(<<<'JS'
+    function formatDuration(totalSeconds){
+      totalSeconds = Math.max(0, parseInt(totalSeconds || 0, 10));
+      const h = Math.floor(totalSeconds / 3600);
+      const m = Math.floor((totalSeconds % 3600) / 60);
+      const s = totalSeconds % 60;
+      const pad = n => n.toString().padStart(2,'0');
+      return `${pad(h)}:${pad(m)}:${pad(s)}`;
+    }
+
+    function startStopwatch(el, startedAt){
+      function update(){
+        const now = Math.floor(Date.now() / 1000);
+        const elapsed = now - startedAt;
+        el.textContent = formatDuration(elapsed);
+      }
+      update();
+      setInterval(update, 1000);
+    }
+
+    document.querySelectorAll('.todo-timer[data-started-at]').forEach(el => {
+      let startedAt = parseInt(el.getAttribute('data-started-at'), 10);
+      if (!isNaN(startedAt) && startedAt > 0) {
+        // normalize ms → seconds if needed
+        if (startedAt > 9999999999) {
+          startedAt = Math.floor(startedAt / 1000);
+        }
+        startStopwatch(el, startedAt);
+      } else {
+        el.textContent = "00:00:00"; // not started yet
+      }
+    });
+    JS);
+?>
+
+

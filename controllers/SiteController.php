@@ -145,7 +145,7 @@ class SiteController extends Controller
         if ((int) $todo->status === Todo::STATUS_PENDING) {
             $todo->status = Todo::STATUS_IN_PROGRESS;
             if ($todo->started_at == null) {
-                $todo->started_at == time();
+                $todo->started_at = time();
             }
             if ($todo->save(false)) {
                 Yii::$app->session->setFlash('success', 'Todo started.');
@@ -153,20 +153,20 @@ class SiteController extends Controller
                 Yii::$app->session->setFlash('error', 'Failed to start Todo.');
             }
         }
-        return $this->redirect['site/index'];
+        return $this->redirect(['site/index']);
     }
 
     public function actionCompleteTodo($id)
     {
         $todo = Todo::find()->forUser(Yii::$app->user->id)->byId((int) $id)->one();
-        if (!todo) {
+        if (!$todo) {
             Yii::$app->session->setFlash('error', 'Todo does not exists.');
             return $this->redirect(['site/index']);
         }
         if ((int) $todo->status != Todo::STATUS_DONE) {
             $todo->status = Todo::STATUS_DONE;
             if ($todo->completed_at == null) {
-                $todo->completd_at == time();
+                $todo->completed_at = time();
             }
             if ($todo->save(false)) {
                 Yii::$app->session->setFlash('success', 'Todo completed.');
