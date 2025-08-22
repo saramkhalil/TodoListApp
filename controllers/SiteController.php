@@ -22,7 +22,7 @@ class SiteController extends Controller
         return [
             'access' => [
                 'class' => AccessControl::class,
-                'only' => ['index', 'toggle-todo', 'update-todo', 'logout'],
+                'only' => ['index', 'toggle-todo', 'update-todo', 'logout', 'delete'],
                 'rules' => [
                     [
                         'allow' => true,
@@ -38,6 +38,7 @@ class SiteController extends Controller
                     'update-todo' => ['post'],
                     'start-todo' => ['post'],
                     'complete-todo' => ['post'],
+                    'delete' => ['post'],
                 ],
             ],
         ];
@@ -174,6 +175,23 @@ class SiteController extends Controller
                 Yii::$app->session->setFlash('error', 'Failed to complete Todo.');
             }
         }
+        return $this->redirect(['site/index']);
+    }
+
+    public function actionDelete($id)
+    {
+        $todo = Todo::find()->forUser(Yii::$app->user->id)->byId((int) $id)->one();
+
+        if (!$todo) {
+            Yii::$app->session->setFlash('error', 'Todo does not exists.');
+            return $this->redirect(['site/index']);
+        }
+        if ($todo->delete() === false) {
+            Yii::$app->session->setFlash('error', 'Failed to delete Todo.');
+        } else {
+            Yii::$app->session->setFlash('success', 'Todo deleted.');
+        }
+
         return $this->redirect(['site/index']);
     }
 

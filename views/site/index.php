@@ -41,9 +41,12 @@ $this->title = 'Home';
 
 <hr>
 
-<div class="row g-4">
+<div class="row g-4 board-columns">
   <div class="col-md-4">
-    <h4>Backlog</h4>
+    <div class="board-header d-flex justify-content-between align-items-center mb-2">
+      <h4 class="mb-0">Backlog</h4>
+      <span class="badge rounded-pill bg-secondary"><?= isset($backlog) ? count($backlog) : 0 ?></span>
+    </div>
     <?php if (empty($backlog)): ?>
       <p class="text-muted">No items.</p>
     <?php else:
@@ -56,6 +59,13 @@ $this->title = 'Home';
                 'class' => 'btn btn-sm btn-outline-primary',
                 'data-method' => 'post'
             ]) ?>
+            <?= \yii\helpers\Html::a('Delete', ['site/delete', 'id' => $t->id], [
+                'class' => 'btn btn-sm btn-outline-danger ms-2',
+                'data' => [
+                    'confirm' => 'Delete this todo?',
+                    'method' => 'post',
+                ],
+            ]) ?>
           </div>
           <?php if ($t->description): ?>
             <div class="mt-2 text-muted"><?= nl2br(\yii\helpers\Html::encode($t->description)) ?></div>
@@ -67,7 +77,10 @@ endif; ?>
   </div>
 
   <div class="col-md-4">
-    <h4>In Progress</h4>
+    <div class="board-header d-flex justify-content-between align-items-center mb-2">
+      <h4 class="mb-0">In Progress</h4>
+      <span class="badge rounded-pill bg-warning text-dark"><?= isset($inProgress) ? count($inProgress) : 0 ?></span>
+    </div>
     <?php if (empty($inProgress)): ?>
       <p class="text-muted">No items.</p>
     <?php else:
@@ -79,6 +92,13 @@ endif; ?>
             <?= \yii\helpers\Html::a('Complete', ['site/complete-todo', 'id' => $t->id], [
                 'class' => 'btn btn-sm btn-success',
                 'data-method' => 'post'
+            ]) ?>
+            <?= \yii\helpers\Html::a('Delete', ['site/delete', 'id' => $t->id], [
+                'class' => 'btn btn-sm btn-outline-danger ms-2',
+                'data' => [
+                    'confirm' => 'Delete this todo?',
+                    'method' => 'post',
+                ],
             ]) ?>
           </div>
           <?php if ($t->description): ?>
@@ -96,7 +116,10 @@ endif; ?>
   </div>
 
   <div class="col-md-4">
-    <h4>Completed</h4>
+    <div class="board-header d-flex justify-content-between align-items-center mb-2">
+      <h4 class="mb-0">Completed</h4>
+      <span class="badge rounded-pill bg-success"><?= isset($completed) ? count($completed) : 0 ?></span>
+    </div>
     <?php if (empty($completed)): ?>
       <p class="text-muted">No items.</p>
     <?php else:
@@ -113,6 +136,15 @@ endif; ?>
         ?>
           <div class="mt-2">
             <small class="text-success">Took: <?= $elapsedText ?></small>
+          </div>
+          <div class="mt-2 text-end">
+            <?= \yii\helpers\Html::a('Delete', ['site/delete', 'id' => $t->id], [
+                'class' => 'btn btn-sm btn-outline-danger',
+                'data' => [
+                    'confirm' => 'Delete this todo?',
+                    'method' => 'post',
+                ],
+            ]) ?>
           </div>
         </div>
       </div>
