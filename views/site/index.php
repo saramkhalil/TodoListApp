@@ -42,7 +42,7 @@ $this->title = 'Home';
 <hr>
 
 <div class="row g-4 board-columns">
-  <div class="col-md-4">
+  <div class="col-md-4" data-column-status="0">
     <div class="board-header d-flex justify-content-between align-items-center mb-2">
       <h4 class="mb-0">Backlog</h4>
       <span class="badge rounded-pill bg-secondary"><?= isset($backlog) ? count($backlog) : 0 ?></span>
@@ -51,7 +51,7 @@ $this->title = 'Home';
       <p class="text-muted">No items.</p>
     <?php else:
     foreach ($backlog as $t): ?>
-      <div class="card mb-3 shadow-sm">
+      <div class="card mb-3 shadow-sm" draggable="true" data-todo-id="<?= (int)$t->id ?>">
         <div class="card-body">
           <div class="d-flex justify-content-between">
             <strong><?= \yii\helpers\Html::encode($t->title) ?></strong>
@@ -76,7 +76,7 @@ $this->title = 'Home';
 endif; ?>
   </div>
 
-  <div class="col-md-4">
+  <div class="col-md-4" data-column-status="2">
     <div class="board-header d-flex justify-content-between align-items-center mb-2">
       <h4 class="mb-0">In Progress</h4>
       <span class="badge rounded-pill bg-warning text-dark"><?= isset($inProgress) ? count($inProgress) : 0 ?></span>
@@ -85,7 +85,7 @@ endif; ?>
       <p class="text-muted">No items.</p>
     <?php else:
     foreach ($inProgress as $t): ?>
-      <div class="card mb-3 border-warning shadow-sm">
+      <div class="card mb-3 border-warning shadow-sm" draggable="true" data-todo-id="<?= (int)$t->id ?>">
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center">
             <strong><?= \yii\helpers\Html::encode($t->title) ?></strong>
@@ -115,7 +115,7 @@ endif; ?>
 endif; ?>
   </div>
 
-  <div class="col-md-4">
+  <div class="col-md-4" data-column-status="1">
     <div class="board-header d-flex justify-content-between align-items-center mb-2">
       <h4 class="mb-0">Completed</h4>
       <span class="badge rounded-pill bg-success"><?= isset($completed) ? count($completed) : 0 ?></span>
@@ -124,7 +124,7 @@ endif; ?>
       <p class="text-muted">No items.</p>
     <?php else:
     foreach ($completed as $t): ?>
-      <div class="card mb-3 border-success shadow-sm">
+      <div class="card mb-3 border-success shadow-sm" draggable="true" data-todo-id="<?= (int)$t->id ?>">
         <div class="card-body">
           <strong><?= \yii\helpers\Html::encode($t->title) ?></strong>
           <?php if ($t->description): ?>
@@ -154,6 +154,9 @@ endif; ?>
 </div>
 
 <?php
+// Provide safe URL variables for JS
+$this->registerJsVar('moveTodoUrl', \yii\helpers\Url::to(['site/move-todo']));
+
 $this->registerJs(<<<'JS'
     function formatDuration(totalSeconds){
       totalSeconds = Math.max(0, parseInt(totalSeconds || 0, 10));
@@ -186,6 +189,99 @@ $this->registerJs(<<<'JS'
         el.textContent = "00:00:00"; // not started yet
       }
     });
+    
+    // Drag & Drop move between columns
+    (function(){
+      const cards = document.querySelectorAll('.card[draggable][data-todo-id]');
+      const columns = document.querySelectorAll('[data-column-status]');
+      let draggedId = null;
+
+      cards.forEach(card => {
+        card.addEventListener('dragstart', e => {
+          draggedId = card.getAttribute('data-todo-id');
+          e.dataTransfer.setData('text/plain', draggedId);
+          e.dataTransfer.effectAllowed = 'move';
+          card.classList.add('dragging');
+        });
+        card.addEventListener('dragend', () => {
+          draggedId = null;
+          card.classList.remove('dragging');
+        });
+      });
+
+      columns.forEach(col => {
+        col.addEventListener('dragover', e => {
+          if (!draggedId) return;
+          
+          // Check if this move is allowed
+          const draggedCard = document.querySelector('.card[draggable][data-todo-id="'+draggedId+'"]');
+          if (!draggedCard) return;
+          
+          const currentCol = draggedCard.closest('[data-column-status]');
+          const currentStatus = parseInt(currentCol.getAttribute('data-column-status'), 10);
+          const targetStatus = parseInt(col.getAttribute('data-column-status'), 10);
+          
+          // Apply business rules
+          let isAllowed = true;
+          if (currentStatus === 2 && targetStatus === 0) isAllowed = false; // In Progress -> Backlog
+          if (currentStatus === 1 && [0, 2].includes(targetStatus)) isAllowed = false; // Completed -> Backlog/In Progress
+          if (currentStatus === 0 && targetStatus === 1) isAllowed = false; // Backlog -> Completed
+          
+          if (!isAllowed) {
+            e.dataTransfer.dropEffect = 'none';
+            col.classList.add('drop-forbidden');
+            return;
+          }
+          
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+          col.classList.add('drop-hover');
+        });
+        col.addEventListener('dragleave', () => {
+          col.classList.remove('drop-hover');
+          col.classList.remove('drop-forbidden');
+        });
+        col.addEventListener('drop', async e => {
+          e.preventDefault();
+          col.classList.remove('drop-hover');
+          const id = draggedId || e.dataTransfer.getData('text/plain');
+          if (!id) return;
+          const status = parseInt(col.getAttribute('data-column-status'), 10);
+          // CSRF
+          const csrfParam = document.querySelector('meta[name="csrf-param"]');
+          const csrfToken = document.querySelector('meta[name="csrf-token"]');
+          const formData = new URLSearchParams();
+          formData.set('id', String(id));
+          formData.set('status', String(status));
+          if (csrfParam && csrfToken) {
+            formData.set(csrfParam.getAttribute('content'), csrfToken.getAttribute('content'));
+          }
+          try {
+            const resp = await fetch(moveTodoUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+              body: formData.toString(),
+              credentials: 'same-origin'
+            });
+            const data = await resp.json();
+            if (data && data.ok) {
+              // Optimistic UI: move the card DOM into the new column
+              const cardEl = document.querySelector('.card[draggable][data-todo-id="'+id+'"]');
+              const columnBody = col.querySelector('.board-header') ? col : col; // insert under the column
+              if (cardEl && columnBody) {
+                columnBody.appendChild(cardEl.parentElement && cardEl.parentElement.classList.contains('card') ? cardEl.parentElement : cardEl);
+              }
+              // Reload to reflect counts and badges quickly
+              window.location.reload();
+            } else {
+              console.error('Move failed', data);
+            }
+          } catch(err) {
+            console.error('Move error', err);
+          }
+        });
+      });
+    })();
     JS);
 ?>
 
