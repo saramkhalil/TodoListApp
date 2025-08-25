@@ -30,4 +30,9 @@ class TodoQuery extends ActiveQuery
     {
         return $this->andWhere(['id' => $id]);
     }
+
+    public function inProgress(): self
+    {
+        return $this->andWhere(['status' => Todo::STATUS_IN_PROGRESS]);
+    }
 }

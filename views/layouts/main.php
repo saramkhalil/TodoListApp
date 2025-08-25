@@ -49,6 +49,15 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
                 . '</li>',
         ],
     ]);
+    echo Html::tag('div',
+        Html::button('Toggle theme', [
+            'id' => 'theme-toggle',
+            'class' => 'btn btn-outline-light btn-sm',
+            'title' => 'Switch light/dark',
+            'type' => 'button',
+        ]),
+        ['class' => 'ms-auto']
+    );
     NavBar::end();
     ?>
 </header>
@@ -73,6 +82,37 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
 </footer>
 
 <?php $this->endBody() ?>
+<?php
+$this->registerJs(<<<'JS'
+  (function(){
+    var storageKey = 'todoapp-theme';
+    var root = document.documentElement;
+    function applyTheme(theme){
+      if(theme === 'dark'){
+        root.setAttribute('data-theme','dark');
+      } else {
+        root.removeAttribute('data-theme');
+      }
+    }
+    var saved = '';
+    try { saved = localStorage.getItem(storageKey) || ''; } catch(e) {}
+    if(!saved){
+      var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      saved = prefersDark ? 'dark' : 'light';
+    }
+    applyTheme(saved);
+    var btn = document.getElementById('theme-toggle');
+    if(btn){
+      btn.addEventListener('click', function(){
+        var current = root.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+        var next = current === 'dark' ? 'light' : 'dark';
+        applyTheme(next);
+        try { localStorage.setItem(storageKey, next); } catch(e) {}
+      });
+    }
+  })();
+JS);
+?>
 </body>
 </html>
 <?php $this->endPage() ?>
