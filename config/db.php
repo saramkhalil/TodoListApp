@@ -2,13 +2,9 @@
 
 return [
     'class' => 'yii\db\Connection',
-    'dsn' => 'mysql:host=127.0.0.1;dbname=todolistapp;charset=utf8mb4',
-    'username' => 'todo_user',
-    'password' => 'DBadmin',
+    'dsn' => $_ENV['DB_DSN'] ?? 'mysql:host=127.0.0.1;dbname=test',
+    'username' => $_ENV['DB_USERNAME'] ?? 'root',
+    'password' => $_ENV['DB_PASSWORD'] ?? '',
     'charset' => 'utf8',
-
-    // Schema cache options (for production environment)
-    //'enableSchemaCache' => true,
-    //'schemaCacheDuration' => 60,
-    //'schemaCache' => 'cache',
 ];
+
